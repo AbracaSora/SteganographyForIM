@@ -68,15 +68,15 @@ RUN curl -sLo ~/miniconda.sh https://repo.continuum.io/miniconda/${CONDA_FILE} \
  && rm ~/miniconda.sh \
  && conda install -y python==${PYTHON_VER} pip==20.3 numpy==1.19.2 \
  && conda clean -ya
-RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
-RUN conda config --set show_channel_urls yes
+
 # CUDA and pytorch
+# 因为conda源不稳定，所以改为pip清华源
 RUN pip install torch torchvision torchaudio -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # jupyter lab
 #RUN conda install -y -c conda-forge jupyterlab \
 #    && conda clean -ya
-# 因为conda源不稳定，所以改为pip清华源
+# 同理，改为pip清华源
 RUN pip install jupyterlab jupyterlab-lsp jupyter-lsp -i https://pypi.tuna.tsinghua.edu.cn/simple
 # lmdb
 #RUN conda install -y lmdb python-lmdb \
@@ -85,7 +85,7 @@ RUN pip install jupyterlab jupyterlab-lsp jupyter-lsp -i https://pypi.tuna.tsing
 RUN pip install lmdb -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # imagenet c with updated dependencies
-# 直接从github上clone会超时，所以改为从ghfast.top源clone
+# 直接从github上clone会超时，所以改为从ghfast.top源clone，后面的pip install也改为清华源
 RUN git clone  https://ghfast.top/https://github.com/TuBui/robustness.git && cd robustness/ImageNet-C/imagenet_c/ && pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # pip packages
