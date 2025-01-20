@@ -1,4 +1,6 @@
 #FROM registry.eps.surrey.ac.uk/tu/cuda:11.3.0-cudnn8-devel-ubuntu20.04
+#FROM nvidia/cuda:11.3.0-cudnn8-devel-ubuntu20.04
+# 因为cuda11.3.0-cudnn8-devel-ubuntu20.04不再支持，所以改为12.6.3-cudnn-runtime-ubuntu20.04
 FROM dockerpull.cn/nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -74,17 +76,21 @@ RUN pip install torch torchvision torchaudio -i https://pypi.tuna.tsinghua.edu.c
 # jupyter lab
 #RUN conda install -y -c conda-forge jupyterlab \
 #    && conda clean -ya
+# 因为conda源不稳定，所以改为pip清华源
 RUN pip install jupyterlab jupyterlab-lsp jupyter-lsp -i https://pypi.tuna.tsinghua.edu.cn/simple
 # lmdb
 #RUN conda install -y lmdb python-lmdb \
 #    && conda clean -ya
+# 同理，改为pip清华源
 RUN pip install lmdb -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # imagenet c with updated dependencies
+# 直接从github上clone会超时，所以改为从ghfast.top源clone
 RUN git clone  https://ghfast.top/https://github.com/TuBui/robustness.git && cd robustness/ImageNet-C/imagenet_c/ && pip install -e . -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # pip packages
 ADD ./requirements.txt ./
 ADD ./requirements2.txt ./
+# 同理，改为pip清华源
 RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install --no-cache-dir -r requirements2.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
