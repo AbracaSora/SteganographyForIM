@@ -8,8 +8,6 @@ import os
 import sys
 
 cdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-os.environ['MAGICK_HOME'] = '/usr/local'
-os.environ['WAND_MAGICK_LIBRARY_SUFFIX'] = '-7.Q16HDRI'
 sys.path.insert(1, os.path.join(cdir, '../'))
 from PIL import Image
 from tools.augment_imagenetc import RandomImagenetC

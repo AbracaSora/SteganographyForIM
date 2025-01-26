@@ -18,7 +18,7 @@ from tools.ecc import BCH, RSC
 
 # noise = RandomImagenetC(phase='test')
 # corrupt_methods = [noise.method_names[i] for i in noise.corrupt_ids]
-model_names = ['RoSteALS', 'RivaGAN']
+model_names = ['RoSteALS', 'RivaGAN', '毕业设计']
 SECRET_LEN = 160
 
 
