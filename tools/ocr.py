@@ -1,13 +1,12 @@
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from PIL import Image
 import os
 import random
-import numpy as np
-import matplotlib.pyplot as plt
-from torch.utils.tensorboard import SummaryWriter
+
+import torch
+import torch.nn as nn
+from PIL import Image
+from torch.utils.data import Dataset
+from torchvision import transforms
+
 
 def getData(data_dir):
     truncate_path = data_dir + ('%05d' % 3755)
@@ -24,11 +23,11 @@ def getData(data_dir):
     return image_names, labels
 
 class GJCTV(Dataset):
-    '''
+    """
         @param
         resize：将图片大小根据网络结构适配
         mode：train或者test模式
-    '''
+    """
     def __init__(self, images, labels, mode):
         super(GJCTV, self).__init__()
         self.images = images

@@ -26,6 +26,7 @@ def main(args):
     secret_len = config.params.control_config.params.secret_len
     config.params.decoder_config.params.secret_len = secret_len
     model = instantiate_from_config(config)
+    # print(model)
     state_dict = torch.load(args.weight, map_location=torch.device('cpu'))
     if 'global_step' in state_dict:
         print(f'Global step: {state_dict["global_step"]}, epoch: {state_dict["epoch"]}')
@@ -49,14 +50,17 @@ def main(args):
 
     # 将密文编码为张量
     ecc = ECC()
-    secret = ecc.encode_text([args.secret])  # 1, 100
-    secret = torch.from_numpy(secret).cuda().float()  # 1, 100
-
+    # secret = ecc.encode_text([args.secret])  # 1, 100
+    # secret = torch.from_numpy(secret).cuda().float()  # 1, 100
+    secret = torch.from_numpy(np.random.randint(0,2,[1,secret_len])).cuda().float()
+    # secret = torch.from_numpy(np.zeros((1,secret_len))).float().cuda()
+    print(secret)
     # 加密
     lpips_alex = lpips.LPIPS(net='alex').cuda()
     sifid_model = SIFID()
     with torch.no_grad():
         z = model.encode_first_stage(cover)
+        print(z)
         z_embed, _ = model(z, None, secret)
         stego = model.decode_first_stage(z_embed)  # 1, 3, 256, 256
         res = stego.clamp(-1, 1) - cover  # (1,3,256,256) residual
@@ -79,6 +83,7 @@ def main(args):
         # 解密
         print('Extracting secret...')
         secret_pred = (model.decoder(stego) > 0).cpu().numpy()  # 1, 100
+        print(torch.from_numpy(np.array([[1. if i else 0. for i in secret_pred[0]]])))
         print(f'Bit acc: {np.mean(secret_pred == secret.cpu().numpy())}')
         secret_decoded = ecc.decode_text(secret_pred)[0]
         print(f'Recovered secret: {secret_decoded}')

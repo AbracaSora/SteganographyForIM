@@ -14,7 +14,8 @@ from ldm.modules.diffusionmodules.util import (
 from einops import rearrange, repeat
 from torchvision.utils import make_grid
 from ldm.modules.attention import SpatialTransformer
-from ldm.modules.diffusionmodules.openaimodel import UNetModel, TimestepEmbedSequential, ResBlock, Downsample, AttentionBlock
+from ldm.modules.diffusionmodules.openaimodel import UNetModel, TimestepEmbedSequential, ResBlock, Downsample, \
+    AttentionBlock
 from ldm.models.diffusion.ddpm import LatentDiffusion
 from ldm.util import log_txt_as_img, exists, instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
@@ -44,6 +45,7 @@ class ControlledUnetModel(UNetModel):
         h = h.type(x.dtype)
         return self.out(h)
 
+
 class View(nn.Module):
     def __init__(self, *shape):
         super().__init__()
@@ -52,37 +54,38 @@ class View(nn.Module):
     def forward(self, x):
         return x.view(*self.shape)
 
+
 class ControlNet(nn.Module):
     def __init__(
-        self,
-        image_size,
-        in_channels,
-        model_channels,
-        hint_channels,
-        num_res_blocks,
-        attention_resolutions,
-        dropout=0,
-        channel_mult=(1, 2, 4, 8),
-        conv_resample=True,
-        dims=2,
-        use_checkpoint=False,
-        use_fp16=False,
-        num_heads=-1,
-        num_head_channels=-1,
-        num_heads_upsample=-1,
-        use_scale_shift_norm=False,
-        resblock_updown=False,
-        use_new_attention_order=False,
-        use_spatial_transformer=False,    # custom transformer support
-        transformer_depth=1,              # custom transformer support
-        context_dim=None,                 # custom transformer support
-        n_embed=None,                     # custom support for prediction of discrete ids into codebook of first stage vq model
-        legacy=True,
-        disable_self_attentions=None,
-        num_attention_blocks=None,
-        disable_middle_self_attn=False,
-        use_linear_in_transformer=False,
-        secret_len = 0,
+            self,
+            image_size,
+            in_channels,
+            model_channels,
+            hint_channels,
+            num_res_blocks,
+            attention_resolutions,
+            dropout=0,
+            channel_mult=(1, 2, 4, 8),
+            conv_resample=True,
+            dims=2,
+            use_checkpoint=False,
+            use_fp16=False,
+            num_heads=-1,
+            num_head_channels=-1,
+            num_heads_upsample=-1,
+            use_scale_shift_norm=False,
+            resblock_updown=False,
+            use_new_attention_order=False,
+            use_spatial_transformer=False,  # custom transformer support
+            transformer_depth=1,  # custom transformer support
+            context_dim=None,  # custom transformer support
+            n_embed=None,  # custom support for prediction of discrete ids into codebook of first stage vq model
+            legacy=True,
+            disable_self_attentions=None,
+            num_attention_blocks=None,
+            disable_middle_self_attn=False,
+            use_linear_in_transformer=False,
+            secret_len=0,
     ):
         super().__init__()
         if use_spatial_transformer:
@@ -119,7 +122,8 @@ class ControlNet(nn.Module):
             assert len(disable_self_attentions) == len(channel_mult)
         if num_attention_blocks is not None:
             assert len(num_attention_blocks) == len(self.num_res_blocks)
-            assert all(map(lambda i: self.num_res_blocks[i] >= num_attention_blocks[i], range(len(num_attention_blocks))))
+            assert all(
+                map(lambda i: self.num_res_blocks[i] >= num_attention_blocks[i], range(len(num_attention_blocks))))
             print(f"Constructor of UNetModel received num_attention_blocks={num_attention_blocks}. "
                   f"This option has LESS priority than attention_resolutions {attention_resolutions}, "
                   f"i.e., in cases where num_attention_blocks[i] > 0 but 2**i not in attention_resolutions, "
@@ -155,10 +159,10 @@ class ControlNet(nn.Module):
         if secret_len > 0:
             log_resolution = int(np.log2(64))
             self.input_hint_block = TimestepEmbedSequential(
-                nn.Linear(secret_len, 16*16*4),
+                nn.Linear(secret_len, 16 * 16 * 4),
                 nn.SiLU(),
                 View(-1, 4, 16, 16),
-                nn.Upsample(scale_factor=(2**(log_resolution-4), 2**(log_resolution-4))),
+                nn.Upsample(scale_factor=(2 ** (log_resolution - 4), 2 ** (log_resolution - 4))),
                 conv_nd(dims, 4, 64, 3, padding=1),
                 nn.SiLU(),
                 conv_nd(dims, 64, 256, 3, padding=1),
@@ -167,21 +171,21 @@ class ControlNet(nn.Module):
             )
         else:
             self.input_hint_block = TimestepEmbedSequential(
-                        conv_nd(dims, hint_channels, 16, 3, padding=1),
-                        nn.SiLU(),
-                        conv_nd(dims, 16, 16, 3, padding=1),
-                        nn.SiLU(),
-                        conv_nd(dims, 16, 32, 3, padding=1, stride=2),
-                        nn.SiLU(),
-                        conv_nd(dims, 32, 32, 3, padding=1),
-                        nn.SiLU(),
-                        conv_nd(dims, 32, 96, 3, padding=1, stride=2),
-                        nn.SiLU(),
-                        conv_nd(dims, 96, 96, 3, padding=1),
-                        nn.SiLU(),
-                        conv_nd(dims, 96, 256, 3, padding=1, stride=2),
-                        nn.SiLU(),
-                        zero_module(conv_nd(dims, 256, model_channels, 3, padding=1))
+                conv_nd(dims, hint_channels, 16, 3, padding=1),
+                nn.SiLU(),
+                conv_nd(dims, 16, 16, 3, padding=1),
+                nn.SiLU(),
+                conv_nd(dims, 16, 32, 3, padding=1, stride=2),
+                nn.SiLU(),
+                conv_nd(dims, 32, 32, 3, padding=1),
+                nn.SiLU(),
+                conv_nd(dims, 32, 96, 3, padding=1, stride=2),
+                nn.SiLU(),
+                conv_nd(dims, 96, 96, 3, padding=1),
+                nn.SiLU(),
+                conv_nd(dims, 96, 256, 3, padding=1, stride=2),
+                nn.SiLU(),
+                zero_module(conv_nd(dims, 256, model_channels, 3, padding=1))
             )
 
         self._feature_size = model_channels
@@ -284,10 +288,10 @@ class ControlNet(nn.Module):
                 num_head_channels=dim_head,
                 use_new_attention_order=use_new_attention_order,
             ) if not use_spatial_transformer else SpatialTransformer(  # always uses a self-attn
-                            ch, num_heads, dim_head, depth=transformer_depth, context_dim=context_dim,
-                            disable_self_attn=disable_middle_self_attn, use_linear=use_linear_in_transformer,
-                            use_checkpoint=use_checkpoint
-                        ),
+                ch, num_heads, dim_head, depth=transformer_depth, context_dim=context_dim,
+                disable_self_attn=disable_middle_self_attn, use_linear=use_linear_in_transformer,
+                use_checkpoint=use_checkpoint
+            ),
             ResBlock(
                 ch,
                 time_embed_dim,
@@ -308,7 +312,7 @@ class ControlNet(nn.Module):
         emb = self.time_embed(t_emb)
         # import pdb; pdb.set_trace()
         guided_hint = self.input_hint_block(hint, emb, context)
-        
+
         outs = []
 
         h = x.type(self.dtype)
@@ -333,14 +337,15 @@ class SecretDecoder(nn.Module):
         self.resolution = resolution
         self.arch = arch
         print(f'SecretDecoder arch: {arch}')
-        def activation(name = 'ReLU'):
+
+        def activation(name='ReLU'):
             if name == 'ReLU':
                 return nn.ReLU()
             elif name == 'LeakyReLU':
                 return nn.LeakyReLU()
             elif name == 'SiLU':
                 return nn.SiLU()
-        
+
         def normalisation(name, n):
             if name == 'none':
                 return nn.Identity()
@@ -351,7 +356,7 @@ class SecretDecoder(nn.Module):
             elif name == 'LayerNorm':
                 return nn.LayerNorm(n)
 
-        if arch=='CNN':
+        if arch == 'CNN':
             self.decoder = nn.Sequential(
                 nn.Conv2d(in_channels, 32, (3, 3), 2, 1),  # 128
                 activation(act),
@@ -416,7 +421,8 @@ class ControlLDM(LatentDiffusion):
         cond_hint = torch.cat(cond['c_concat'], 1)
 
         control = self.control_model(x=x_noisy, hint=cond_hint, timesteps=t, context=cond_txt)
-        eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
+        eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control,
+                              only_mid_control=self.only_mid_control)
 
         return eps
 
@@ -490,7 +496,7 @@ class ControlLDM(LatentDiffusion):
         ddim_sampler = DDIMSampler(self)
         # import pdb; pdb.set_trace()
         # b, c, h, w = cond["c_concat"][0].shape
-        b, c, h, w = cond["c_concat"][0].shape[0], self.channels, self.image_size*8, self.image_size*8
+        b, c, h, w = cond["c_concat"][0].shape[0], self.channels, self.image_size * 8, self.image_size * 8
         shape = (self.channels, h // 8, w // 8)
         samples, intermediates = ddim_sampler.sample(ddim_steps, batch_size, shape, cond, verbose=False, **kwargs)
         return samples, intermediates

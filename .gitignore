@@ -1,2 +1,5 @@
 __pycache__/*
 models/first_stage_models/*
+/saved_models/
+/saved_models_256/
+/images/

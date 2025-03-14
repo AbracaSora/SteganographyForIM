@@ -9,7 +9,7 @@ import os
 import sys
 import io
 import time
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import random
 from PIL import Image
@@ -17,6 +17,8 @@ from typing import Any, Callable, List, Optional, Tuple
 import torch
 from torchvision import transforms
 from .base_lmdb import PILlmdb, ArrayDatabase
+
+
 # from . import debug
 
 
@@ -25,8 +27,8 @@ def worker_init_fn(worker_id):
     #  random seed issue with numpy in multi-worker settings
     torch_seed = torch.initial_seed()
     random.seed(torch_seed + worker_id)
-    if torch_seed >= 2**30:  # make sure torch_seed + workder_id < 2**32
-        torch_seed = torch_seed % 2**30
+    if torch_seed >= 2 ** 30:  # make sure torch_seed + workder_id < 2**32
+        torch_seed = torch_seed % 2 ** 30
     np.random.seed(torch_seed + worker_id)
 
 
@@ -46,13 +48,15 @@ def dataset_wrapper(data_dir, data_list, **kwargs):
 
 class ImageFolder(torch.utils.data.Dataset):
     _repr_indent = 4
+
     def __init__(self, data_dir, data_list, secret_len=100, resize=256, transform=None, **kwargs):
         super().__init__()
-        self.transform = transforms.RandomResizedCrop((resize, resize), scale=(0.8, 1.0), ratio=(0.75, 1.3333333333333333)) if transform is None else transform
+        self.transform = transforms.RandomResizedCrop((resize, resize), scale=(0.8, 1.0), ratio=(
+        0.75, 1.3333333333333333)) if transform is None else transform
         self.build_data(data_dir, data_list, **kwargs)
         self.kwargs = kwargs
         self.secret_len = secret_len
-    
+
     def build_data(self, data_dir, data_list, **kwargs):
         self.data_dir = data_dir
         if isinstance(data_list, list):
@@ -64,18 +68,19 @@ class ImageFolder(torch.utils.data.Dataset):
         else:
             raise ValueError('data_list must be a list, str or pd.DataFrame')
         self.N = len(self.data_list)
-    
+
     def __getitem__(self, index):
         path = self.data_list[index]
         img = pil_loader(os.path.join(self.data_dir, path))
         img = self.transform(img)
-        img = np.array(img, dtype=np.float32)/127.5-1.  # [-1, 1]
-        secret = torch.zeros(self.secret_len, dtype=torch.float).random_(0, 2)
+        img = np.array(img, dtype=np.float32) / 127.5 - 1.  # [-1, 1]
+        secret = torch.zeros((256, 256), dtype=torch.float).random_(0, 2)
         return {'image': img, 'secret': secret}  # {'img': x, 'index': index}
 
     def __len__(self) -> int:
         # raise NotImplementedError
-        return self.N 
+        return self.N
+
 
 class ImageDataset(torch.utils.data.Dataset):
     r"""
@@ -90,7 +95,9 @@ class ImageDataset(torch.utils.data.Dataset):
             # x and y is input and target (dict), the keys can be customised.
     """
     _repr_indent = 4
-    def __init__(self, data_dir, data_list, secret_len=100, resize=None,  transform=None, target_transform=None, **kwargs):
+
+    def __init__(self, data_dir, data_list, secret_len=100, resize=None, transform=None, target_transform=None,
+                 **kwargs):
         super().__init__()
         if resize is not None:
             self.resize = transforms.Resize((resize, resize))
@@ -150,13 +157,13 @@ class ImageDataset(torch.utils.data.Dataset):
             x = self.transform(x)
         if self.target_transform is not None:
             y = self.target_transform(y)
-        x = np.array(x, dtype=np.float32)/127.5-1.
+        x = np.array(x, dtype=np.float32) / 127.5 - 1.
         secret = torch.zeros(self.secret_len, dtype=torch.float).random_(0, 2)
         return {'image': x, 'secret': secret}  # {'img': x, 'index': index}
 
     def __len__(self) -> int:
         # raise NotImplementedError
-        return self.N 
+        return self.N
 
     def __repr__(self) -> str:
         head = "\nDataset " + self.__class__.__name__
@@ -178,4 +185,3 @@ class ImageDataset(torch.utils.data.Dataset):
 
     def extra_repr(self) -> str:
         return ""
-

@@ -24,6 +24,7 @@ class ImageSecretLoss(nn.Module):
         self.perceptual_loss = LPIPS().eval()
         self.logvar = nn.Parameter(torch.ones(size=()) * logvar_init)
         self.bce = nn.BCEWithLogitsLoss(reduction="none")
+        self.mse = nn.MSELoss(reduction="none")
     
     def activate_ramp(self, global_step):
         if not self.ramp_on:  # do not activate ramp twice
@@ -62,7 +63,7 @@ class ImageSecretLoss(nn.Module):
 
         image_weight = 1 + min(self.max_image_weight, max(0., self.max_image_weight*(global_step - self.step0.item())/self.ramp))
 
-        secret_loss = self.bce(secret_pred, secret_gt).mean(dim=1)
+        secret_loss = self.mse(secret_pred, secret_gt).mean(dim=1)
         loss = (loss*image_weight + secret_loss*self.secret_weight) / (image_weight+self.secret_weight)
 
         # loss dict update

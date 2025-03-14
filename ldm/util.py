@@ -79,7 +79,7 @@ def instantiate_from_config(config):
     return get_obj_from_str(config["target"])(**config.get("params", dict()))
 
 
-def get_obj_from_str(string, reload=False):
+def get_obj_from_str(string, reload=True):
     module, cls = string.rsplit(".", 1)
     if reload:
         module_imp = importlib.import_module(module)

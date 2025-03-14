@@ -19,7 +19,7 @@ from tools.ecc import BCH, RSC
 # noise = RandomImagenetC(phase='test')
 # corrupt_methods = [noise.method_names[i] for i in noise.corrupt_ids]
 model_names = ['RoSteALS', 'RivaGAN', '毕业设计']
-SECRET_LEN = 160
+SECRET_LEN = 100
 
 
 def unormalize(x):
@@ -38,11 +38,11 @@ def to_bytes(x):
 
 def load_models():
     # prioritise secret recovery
-    config_file = '/mnt/fast/nobackup/scratch4weeks/tb0035/projects/diffsteg/controlnet/VQ4_s160_full_lw2/configs/-project.yaml'
-    weight_file = '/mnt/fast/nobackup/scratch4weeks/tb0035/projects/diffsteg/controlnet/VQ4_s160_full_lw2/checkpoints/epoch=000002-step=000399999.ckpt'
+    # config_file = '/mnt/fast/nobackup/scratch4weeks/tb0035/projects/diffsteg/controlnet/VQ4_s160_full_lw2/configs/-project.yaml'
+    # weight_file = '/mnt/fast/nobackup/scratch4weeks/tb0035/projects/diffsteg/controlnet/VQ4_s160_full_lw2/checkpoints/epoch=000002-step=000399999.ckpt'
     # prioritise stego quality
-    config_file = '/mnt/fast/nobackup/scratch4weeks/tb0035/projects/diffsteg/controlnet/VQ4_s160_full_lw5/configs/-project.yaml'
-    weight_file = '/mnt/fast/nobackup/scratch4weeks/tb0035/projects/diffsteg/controlnet/VQ4_s160_full_lw5/checkpoints/epoch=000011-step=002549999.ckpt'
+    config_file = 'saved_models/configs/-project.yaml'
+    weight_file = 'saved_models/checkpoints/epoch=000003-step=000099999.ckpt'
     config = OmegaConf.load(config_file).model
     secret_len = config.params.control_config.params.secret_len
     assert SECRET_LEN == secret_len
@@ -72,8 +72,7 @@ def embed_secret(model_name, model, cover, tform, secret):
             res = (stego.clamp(-1, 1) - im)  # (1,3,256,256) residual
             res = torch.nn.functional.interpolate(res, (h, w), mode='bilinear')
             res = res.permute(0, 2, 3, 1).cpu().numpy()  # (1,256,256,3)
-            stego_uint8 = np.clip(res[0] + np.array(cover) / 127.5 - 1., -1,
-                                  1) * 127.5 + 127.5  # (256, 256, 3), ndarray, uint8
+            stego_uint8 = np.clip(res[0] + np.array(cover) / 127.5 - 1., -1, 1) * 127.5 + 127.5  # (256, 256, 3), ndarray, uint8
             stego_uint8 = stego_uint8.astype(np.uint8)
     else:
         raise NotImplementedError

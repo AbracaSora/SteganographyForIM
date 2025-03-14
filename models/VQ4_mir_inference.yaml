@@ -27,12 +27,12 @@ model:
           target: torch.nn.Identity
 
     decoder_config:
-      target: cldm.diffsteg.SecretDecoder
+      target: cldm.diffsteg.SecretDecoder1
       params:
         arch: resnet50
         
     control_config:
-      target: cldm.ae.SecretEncoder3
+      target: cldm.ae.SecretEncoder7
       params:
         secret_len: 100
         resolution: 64
